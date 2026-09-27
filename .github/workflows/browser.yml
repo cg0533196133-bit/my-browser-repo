@@ -24,7 +24,7 @@ jobs:
       - name: Install system dependencies & VNC
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb x11vnc
+          sudo apt-get install -y xvfb x11vnc wget
           npx playwright install-deps chromium
 
       - name: Start Virtual Display, VNC & noVNC proxy
@@ -49,13 +49,16 @@ jobs:
             })();
           ' &
 
-      - name: Set up Cloudflare Tunnel
-        uses: cloudflare/cloudflared-action@v3
-        with:
-          protocol: http
-          port: 6080
+      - name: Download and Run Cloudflare Tunnel
+        run: |
+          # הורדת הכלי הרשמי של קלאודפלייר ללינוקס
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared
+          chmod +x cloudflared
+          
+          # הפעלת ה-Tunnel והצגת הכתובת בלוגים (ר' ברקע)
+          ./cloudflared tunnel --url http://localhost:6080 &
 
       - name: Keep job alive
         run: |
-          echo "Environment is ready. Use the Cloudflare URL generated above to connect."
+          echo "Environment is ready. Look at the Cloudflare tunnel output above for your URL."
           sleep 3600
