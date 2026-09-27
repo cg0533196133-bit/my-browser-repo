@@ -1,0 +1,62 @@
+name: Remote Playwright Browser
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          npm init -y
+          npm install playwright
+
+      - name: Install system dependencies & VNC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb x11vnc
+          npx playwright install-deps chromium
+
+      - name: Start Virtual Display, VNC & noVNC proxy
+        run: |
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          x11vnc -display :99 -forever -nopw -shared &
+          git clone https://github.com/novnc/noVNC.git /opt/novnc
+          /opt/novnc/utils/novnc_proxy --vnc localhost:5900 --listen 6080 &
+
+      - name: Start Playwright Chromium (Headed mode)
+        run: |
+          export DISPLAY=:99
+          node -e '
+            const { chromium } = require("playwright");
+            (async () => {
+              const browser = await chromium.launch({ headless: false, args: ["--start-maximized"] });
+              const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+              const page = await context.newPage();
+              await page.goto("https://www.google.com");
+              // מחכה כדי שהדפדפן יישאר פתוח כל עוד ה-Job רץ
+              await new Promise(() => {});
+            })();
+          ' &
+
+      - name: Expose via Ngrok Tunnel
+        uses: ngrok/ngrok-action@v1
+        with:
+          addr: 6080
+          authtoken: ${{ secrets.NGROK_AUTHTOKEN }}
+
+      - name: Keep job alive
+        run: |
+          echo "Environment is ready. Use the Ngrok URL above to connect."
+          sleep 3600
