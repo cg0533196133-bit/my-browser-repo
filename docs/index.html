@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>שליטה בדפדפן מרוחק</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="control-panel">
+        <h2>שליטה בדפדפן GitHub Actions</h2>
+        <div class="input-group">
+            <label for="ngrok-url">הדבק כאן את כתובת ה-Ngrok (ללא https://):</label>
+            <input type="text" id="ngrok-url" placeholder="xxxx.ngrok-free.app">
+            <button id="connect-btn">התחבר</button>
+        </div>
+    </div>
+
+    <div id="screen-container">
+        <!-- כאן יטען ממשק ה-noVNC -->
+        <iframe id="vnc-frame" src="" style="display: none;"></iframe>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
